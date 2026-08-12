@@ -1,49 +1,39 @@
-# Calculate hours worked (CLI-friendly)
-import argparse
-import re
-import sys
+# Pay Rate Calculator with Overtime (1.5x for hours > 40)
 
-def calculate_hours_worked(start_time="11:00", end_time="17:30"):
-    """Calculate total hours worked between two times in HH:MM format.
-
-    Accepts times that cross midnight (e.g., 22:00 02:00 -> 4 hours).
-    Returns a float number of hours.
+def calculate_gross_pay(hours, rate):
     """
-    def parse_time(t):
-        if not re.match(r"^\d{1,2}:\d{2}$", t):
-            raise ValueError(f"Invalid time format: {t!r}. Expected HH:MM")
-        h, m = map(int, t.split(":"))
-        if not (0 <= h < 24 and 0 <= m < 60):
-            raise ValueError(f"Invalid time value: {t!r}. Hours 0-23, minutes 0-59")
-        return h * 60 + m
-
-    start_minutes = parse_time(start_time)
-    end_minutes = parse_time(end_time)
-
-    if end_minutes < start_minutes:
-        # Assume crossing midnight
-        end_minutes += 24 * 60
-
-    total_minutes_worked = end_minutes - start_minutes
-    return total_minutes_worked / 60.0
+    Calculate gross pay with overtime.
+    Overtime is paid at 1.5x the hourly rate for hours over 40.
+    """
+    if hours > 40:
+        regular_pay = 40 * rate
+        overtime_hours = hours - 40
+        overtime_pay = overtime_hours * rate * 1.5
+        return regular_pay + overtime_pay
+    else:
+        return hours * rate
 
 
-def format_hours(hours_float):
-    hours_int = int(hours_float)
-    minutes = round((hours_float - hours_int) * 60)
-    return f"{hours_int}h {minutes}m ({hours_float:.2f} hours)"
+def main():
+    try:
+        # Get user input
+        hours_worked = float(input("Enter hours worked: "))
+        hourly_rate = float(input("Enter hourly pay rate: "))
+
+        # Validate inputs
+        if hours_worked < 0 or hourly_rate < 0:
+            print("Error: Hours and rate must be non-negative.")
+            return
+
+        # Calculate gross pay
+        gross_pay = calculate_gross_pay(hours_worked, hourly_rate)
+
+        # Display result
+        print(f"Gross pay: ${gross_pay:,.2f}")
+
+    except ValueError:
+        print("Invalid input. Please enter numeric values only.")
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Calculate hours worked between two times (HH:MM).")
-    parser.add_argument("start", nargs="?", default="11:00", help="Start time in HH:MM (default: 11:00)")
-    parser.add_argument("end", nargs="?", default="17:30", help="End time in HH:MM (default: 17:30)")
-    args = parser.parse_args()
-
-    try:
-        hours = calculate_hours_worked(args.start, args.end)
-    except ValueError as e:
-        print(f"Error: {e}", file=sys.stderr)
-        sys.exit(2)
-
-    print(format_hours(hours))
+    main()
